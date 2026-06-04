@@ -39,6 +39,20 @@ app.use(morgan('dev'));
 // Rate limiting
 app.use('/api', generalLimiter);
 
+// Database connection check (skip health endpoint)
+const mongoose = require('mongoose');
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health') return next();
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: '数据库连接中，请稍后重试',
+      data: null,
+    });
+  }
+  next();
+});
+
 // ---------- Route mounting ----------
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/documents', require('./routes/documents'));
