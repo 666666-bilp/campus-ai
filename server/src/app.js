@@ -6,12 +6,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
-const { connectDatabase: connectDB } = require('./config/database');
 
 const app = express();
-
-// Connect to database
-connectDB();
 
 // Security middleware
 app.use(helmet());
