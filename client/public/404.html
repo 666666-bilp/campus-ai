@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>大学生学术AI助手</title>
+  <script>
+    // Cloudflare Pages SPA fallback: 将所有 404 路由重定向到 index.html
+    const path = sessionStorage.getItem('cf-redirect') || '/';
+    sessionStorage.removeItem('cf-redirect');
+    const url = new URL(window.location.href);
+    if (url.pathname !== '/' && url.pathname !== '/index.html') {
+      sessionStorage.setItem('cf-redirect', url.pathname + url.search);
+    }
+    window.location.replace('/');
+  </script>
+</head>
+<body></body>
+</html>
