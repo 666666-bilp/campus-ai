@@ -140,7 +140,7 @@
           <EmptyState
             icon="📝"
             :title="searchQuery ? '没有找到匹配的笔记' : '还没有笔记'"
-            :description="searchQuery ? '尝试其他关键词或清除筛选条件' : '点击"新建笔记"开始记录你的学习内容，支持AI自动总结'"
+            :description="searchQuery ? '尝试其他关键词或清除筛选条件' : '点击新建笔记开始记录你的学习内容，支持AI自动总结'"
           />
         </div>
 
@@ -467,8 +467,7 @@ async function handleTogglePin(note) {
     const id = note._id || note.id
     const newPinned = !(note.pinned || note.isPinned)
     await noteAPI.update(id, { pinned: newPinned })
-    // Also try togglePin if available
-    try { await noteAPI.togglePin(id) } catch (_) { /* optional */ }
+    try { await noteAPI.togglePin(id) } catch (_) {}
     note.pinned = newPinned
     note.isPinned = newPinned
   } catch (err) {
