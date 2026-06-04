@@ -6,12 +6,14 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
-const connectDB = require('./config/database');
+
+// 这里改成你正确的数据库函数！！！
+const { connectDatabase } = require('./config/database');
 
 const app = express();
 
-// Connect to database
-//connectDB();
+// Connect to database → 这里也改对！
+connectDatabase();
 
 // Security middleware
 app.use(helmet());
