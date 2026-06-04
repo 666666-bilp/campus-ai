@@ -1,19 +1,14 @@
 const mongoose = require('mongoose');
 
-const MAX_RETRIES = 5;
-const RETRY_DELAY_MS = 5000;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 10000;
 
-/**
- * Connect to MongoDB with retry logic.
- * @param {string} [uri] - MongoDB connection URI. Defaults to MONGODB_URI env var.
- * @returns {Promise<typeof mongoose>}
- */
 async function connectDatabase(uri) {
   const connectionString = uri || process.env.MONGODB_URI;
 
   if (!connectionString) {
-    console.error('MONGODB_URI is not defined in environment variables.');
-    process.exit(1);
+    console.warn('MONGODB_URI is not defined. Server will run without database.');
+    return null;
   }
 
   mongoose.connection.on('connecting', () => {
@@ -33,7 +28,7 @@ async function connectDatabase(uri) {
   });
 
   mongoose.connection.on('error', (err) => {
-    console.error(`MongoDB connection error: ${err.message}`, { stack: err.stack });
+    console.error(`MongoDB connection error: ${err.message}`);
   });
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
@@ -42,7 +37,7 @@ async function connectDatabase(uri) {
         maxPoolSize: 10,
         minPoolSize: 2,
         socketTimeoutMS: 45000,
-        serverSelectionTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 10000,
         heartbeatFrequencyMS: 10000,
         retryWrites: true,
         w: 'majority',
@@ -54,8 +49,8 @@ async function connectDatabase(uri) {
       console.error(`MongoDB connection attempt ${attempt}/${MAX_RETRIES} failed: ${err.message}`);
 
       if (attempt === MAX_RETRIES) {
-        console.error('MongoDB: all connection attempts exhausted. Exiting.');
-        process.exit(1);
+        console.warn('MongoDB: all connection attempts exhausted. Server will run without database.');
+        return null;
       }
 
       const delay = RETRY_DELAY_MS * attempt;
@@ -65,9 +60,6 @@ async function connectDatabase(uri) {
   }
 }
 
-/**
- * Close the database connection gracefully.
- */
 async function disconnectDatabase() {
   try {
     await mongoose.connection.close();
@@ -77,7 +69,6 @@ async function disconnectDatabase() {
   }
 }
 
-// Process-level graceful shutdown
 process.on('SIGINT', async () => {
   await disconnectDatabase();
   process.exit(0);

@@ -140,7 +140,7 @@
           <EmptyState
             icon="📝"
             :title="searchQuery ? '没有找到匹配的笔记' : '还没有笔记'"
-            :description="searchQuery ? '尝试其他关键词或清除筛选条件' : '点击"新建笔记"开始记录你的学习内容，支持AI自动总结'"
+            :description="searchQuery ? '尝试其他关键词或清除筛选条件' : '点击「新建笔记」开始记录你的学习内容，支持AI自动总结'"
           />
         </div>
 
