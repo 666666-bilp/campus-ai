@@ -137,11 +137,11 @@
           v-if="!loading && !errorMsg && sortedNotes.length === 0"
           class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-dashed border-gray-300 dark:border-gray-600 p-16"
         >
-          <EmptyState
-            icon="📝"
-            :title="searchQuery ? '没有找到匹配的笔记' : '还没有笔记'"
-            :description="searchQuery ? '尝试其他关键词或清除筛选条件' : '点击新建笔记开始记录你的学习内容，支持AI自动总结'"
-          />
+         <EmptyState
+  icon="📝"
+  :title="searchQuery ? '没有找到匹配的笔记' : '还没有笔记'"
+  :description="searchQuery ? '尝试其他关键词或清除筛选条件' : '点击\'新建笔记\'开始记录你的学习内容，支持AI自动总结'"
+/>
         </div>
 
         <!-- Notes Grid -->
