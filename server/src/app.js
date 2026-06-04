@@ -6,7 +6,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
-const connectDB = require('./config/database');
+const { connectDatabase: connectDB } = require('./config/database');
 
 const app = express();
 
