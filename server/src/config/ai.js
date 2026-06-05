@@ -89,11 +89,11 @@ async function callAI(messages, options = {}) {
   const config = resolveProvider();
 
   if (!config.apiKey) {
+    const envVar = config.provider === AI_PROVIDERS.ANTHROPIC ? 'ANTHROPIC_API_KEY' : 'OPENAI_API_KEY';
+    console.error(`[AI] ${envVar} 未配置！所有 AI 功能（翻译、润色、论文生成等）将不可用。请在 .env 或 Railway 环境变量中设置 ${envVar}。`);
     return {
       success: false,
-      error: `AI API key not configured. Set ${
-        config.provider === AI_PROVIDERS.ANTHROPIC ? 'ANTHROPIC_API_KEY' : 'OPENAI_API_KEY'
-      } environment variable.`,
+      error: `AI 服务未配置：请在环境变量中设置 ${envVar}。如使用 OpenAI，获取地址: https://platform.openai.com/api-keys`,
     };
   }
 

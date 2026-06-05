@@ -68,8 +68,10 @@ app.use('/api/code', require('./routes/code'));
 app.use('/api/english', require('./routes/english'));
 app.use('/api/users', require('./routes/users'));
 
-// Health check - 包含数据库状态
+// Health check - 包含数据库和AI服务状态
 app.get('/api/health', (req, res) => {
+  const { resolveProvider } = require('./config/ai');
+  const aiConfig = resolveProvider();
   const dbState = mongoose.connection.readyState;
   const dbStateMap = {
     0: 'disconnected',
@@ -81,6 +83,11 @@ app.get('/api/health', (req, res) => {
     success: true,
     message: '服务运行正常',
     database: dbStateMap[dbState] || 'unknown',
+    ai: {
+      provider: aiConfig.provider,
+      configured: !!aiConfig.apiKey,
+      message: aiConfig.apiKey ? 'AI服务已配置' : 'AI服务未配置，翻译/润色/论文生成等将不可用',
+    },
     uptime: process.uptime(),
     timestamp: new Date(),
   });

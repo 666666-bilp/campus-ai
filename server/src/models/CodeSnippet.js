@@ -15,7 +15,7 @@ const codeSnippetSchema = new mongoose.Schema(
     },
     language: {
       type: String,
-      enum: ['c', 'cpp', 'python', 'java', 'javascript', 'html', 'css'],
+      enum: ['c', 'cpp', 'python', 'java', 'javascript', 'typescript', 'html', 'css', 'go', 'rust', 'sql', 'bash', 'markdown', 'other'],
       required: true,
     },
     code: {

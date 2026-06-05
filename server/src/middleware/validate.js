@@ -58,8 +58,8 @@ const paperRules = [
     .notEmpty().withMessage('Topic is required.'),
   body('paperType')
     .optional()
-    .isIn(['essay', 'research', 'report', 'thesis', 'review', 'case_study', 'literature_review', 'other'])
-    .withMessage('Invalid paper type.'),
+    .isIn(['开题报告', '毕业论文', '课程论文', '文献综述'])
+    .withMessage('论文类型无效，请选择: 开题报告、毕业论文、课程论文、文献综述'),
   body('major')
     .optional()
     .trim(),
