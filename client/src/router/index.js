@@ -104,6 +104,11 @@ const routes = [
     meta: { auth: true, title: '口语陪练' }
   },
   {
+    path: '/guide', name: 'Guide',
+    component: () => import('@/views/guide/GuideView.vue'),
+    meta: { auth: true, title: '使用指南' }
+  },
+  {
     path: '/profile', name: 'Profile',
     component: () => import('@/views/profile/ProfileView.vue'),
     meta: { auth: true, title: '个人中心' }

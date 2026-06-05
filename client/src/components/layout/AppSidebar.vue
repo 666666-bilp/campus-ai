@@ -98,7 +98,8 @@ const navItems = [
   { to: '/exam', icon: '📋', label: '考点题库' },
   { to: '/experiment', icon: '🔬', label: '实验报告' },
   { to: '/code-editor', icon: '💻', label: '代码编辑' },
-  { to: '/english', icon: '🌍', label: '外语学习' }
+  { to: '/english', icon: '🌍', label: '外语学习' },
+  { to: '/guide', icon: '📖', label: '使用指南' }
 ]
 </script>
 
