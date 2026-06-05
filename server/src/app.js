@@ -13,7 +13,10 @@ const { connectDatabase } = require('./config/database');
 
 const app = express();
 
-// Connect to database → 这里也改对！
+// Railway部署需要信任反向代理
+app.set('trust proxy', 1);
+
+// Connect to database
 connectDatabase();
 
 // Security middleware
