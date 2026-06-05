@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const mongoose = require('mongoose');
 const { generalLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -17,8 +18,25 @@ connectDatabase();
 
 // Security middleware
 app.use(helmet());
+
+// CORS - 支持多个域名
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // 没有 origin 的请求（如 Postman、curl、服务端调用）直接放行
+    if (!origin) return callback(null, true);
+    // 精确匹配白名单
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // 允许所有 Cloudflare Pages 默认域名 (*.pages.dev)
+    if (origin.endsWith('.pages.dev')) return callback(null, true);
+    // 拒绝
+    callback(new Error('CORS blocked: origin not allowed'));
+  },
   credentials: true,
 }));
 
@@ -46,11 +64,20 @@ app.use('/api/code', require('./routes/code'));
 app.use('/api/english', require('./routes/english'));
 app.use('/api/users', require('./routes/users'));
 
-// Health check
+// Health check - 包含数据库状态
 app.get('/api/health', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbStateMap = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
   res.json({
     success: true,
     message: '服务运行正常',
+    database: dbStateMap[dbState] || 'unknown',
+    uptime: process.uptime(),
     timestamp: new Date(),
   });
 });

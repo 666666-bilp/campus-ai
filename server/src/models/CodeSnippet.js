@@ -39,7 +39,6 @@ const codeSnippetSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-codeSnippetSchema.index({ shareId: 1 });
 codeSnippetSchema.index({ userId: 1, language: 1 });
 codeSnippetSchema.index({ userId: 1, createdAt: -1 });
 

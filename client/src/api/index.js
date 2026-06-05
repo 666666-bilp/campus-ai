@@ -33,7 +33,7 @@ export const paperAPI = {
   export: (id, format) => request.get(`/papers/${id}/export/${format}`, { responseType: 'blob' }),
   streamGenerate: (id) => {
     const token = localStorage.getItem('token')
-    const baseUrl = import.meta.env.VITE_API_URL || '/api'
+    const baseUrl = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'
     return new EventSource(`${baseUrl}/papers/${id}/stream?token=${token}`)
   }
 }

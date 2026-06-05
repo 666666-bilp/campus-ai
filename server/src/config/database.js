@@ -42,7 +42,7 @@ async function connectDatabase(uri) {
         maxPoolSize: 10,
         minPoolSize: 2,
         socketTimeoutMS: 45000,
-        serverSelectionTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 30000,
         heartbeatFrequencyMS: 10000,
         retryWrites: true,
         w: 'majority',
