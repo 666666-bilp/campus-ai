@@ -35,11 +35,7 @@
 
       <!-- Page Content -->
       <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-        <router-view v-slot="{ Component, route }">
-          <transition name="page" mode="out-in">
-            <component :is="Component" :key="route.path" />
-          </transition>
-        </router-view>
+        <slot />
       </main>
 
       <!-- Footer -->
