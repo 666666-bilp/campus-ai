@@ -22,23 +22,24 @@ connectDatabase();
 // Security middleware
 app.use(helmet());
 
-// CORS - 支持多个域名
+// CORS - 支持本地开发 + Cloudflare Pages 生产环境
 const allowedOrigins = [
-  process.env.CLIENT_URL,
-  'http://localhost:5173',
-  'http://localhost:3000',
+  process.env.CLIENT_URL,                          // Railway 环境变量，覆盖自定义域名
+  'http://localhost:5173',                          // Vite 本地开发
+  'http://localhost:3000',                          // 后端自身（调试用）
 ].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-    // 没有 origin 的请求（如 Postman、curl、服务端调用）直接放行
+    // 无 origin（Postman/curl/服务端调用）直接放行
     if (!origin) return callback(null, true);
     // 精确匹配白名单
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    // 允许所有 Cloudflare Pages 默认域名 (*.pages.dev)
+    // Cloudflare Pages 默认域名 *.pages.dev
     if (origin.endsWith('.pages.dev')) return callback(null, true);
-    // 拒绝
-    callback(new Error('CORS blocked: origin not allowed'));
+    // 拒绝：打印日志便于排查，返回标准 CORS 拒绝响应
+    console.warn('[CORS] 拒绝未授权域名:', origin);
+    callback(null, false);
   },
   credentials: true,
 }));
