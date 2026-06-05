@@ -37,12 +37,17 @@ function resolveProvider() {
     };
   }
 
-  // Default to OpenAI-compatible
+  // Default to OpenAI-compatible (DeepSeek, Moonshot, etc.)
+  const customModel = process.env.AI_MODEL;
+  const models = customModel
+    ? { default: customModel, fast: customModel }
+    : DEFAULT_MODELS[AI_PROVIDERS.OPENAI];
+
   return {
     provider: AI_PROVIDERS.OPENAI,
     apiKey: process.env.OPENAI_API_KEY,
     baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
-    models: DEFAULT_MODELS[AI_PROVIDERS.OPENAI],
+    models,
   };
 }
 
