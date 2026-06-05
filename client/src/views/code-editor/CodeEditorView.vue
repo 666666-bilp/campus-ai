@@ -282,6 +282,7 @@ const navItems = [
   { icon: '🔬', label: '实验报告', path: '/experiment' },
   { icon: '💻', label: '代码编辑', path: '/code-editor' },
   { icon: '🌍', label: '外语学习', path: '/english' },
+  { icon: '📖', label: '使用指南', path: '/guide' },
 ]
 
 const filteredSnippets = computed(() => {

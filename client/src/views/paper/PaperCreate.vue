@@ -41,7 +41,7 @@ const sb = ref(window.innerWidth>=1024)
 const form = reactive({title:'',major:'',paperType:'课程论文',wordCount:3000})
 const creating = ref(false); const generating = ref(false); const error = ref('')
 const createdPaper = ref(null); const outline = ref(null)
-const navItems=[{icon:'📊',label:'工作台',path:'/dashboard'},{icon:'📚',label:'文献处理',path:'/literature'},{icon:'✍️',label:'论文生成',path:'/paper/create'},{icon:'📝',label:'论文历史',path:'/paper/history'},{icon:'✨',label:'论文润色',path:'/polish'},{icon:'📐',label:'LaTeX',path:'/latex'},{icon:'📅',label:'智能课表',path:'/schedule'},{icon:'📔',label:'云端笔记',path:'/notes'},{icon:'📋',label:'考点题库',path:'/exam'},{icon:'🔬',label:'实验报告',path:'/experiment'},{icon:'💻',label:'代码编辑',path:'/code-editor'},{icon:'🌍',label:'外语学习',path:'/english'}]
+const navItems=[{icon:'📊',label:'工作台',path:'/dashboard'},{icon:'📚',label:'文献处理',path:'/literature'},{icon:'✍️',label:'论文生成',path:'/paper/create'},{icon:'📝',label:'论文历史',path:'/paper/history'},{icon:'✨',label:'论文润色',path:'/polish'},{icon:'📐',label:'LaTeX',path:'/latex'},{icon:'📅',label:'智能课表',path:'/schedule'},{icon:'📔',label:'云端笔记',path:'/notes'},{icon:'📋',label:'考点题库',path:'/exam'},{icon:'🔬',label:'实验报告',path:'/experiment'},{icon:'💻',label:'代码编辑',path:'/code-editor'},{icon:'🌍',label:'外语学习',path:'/english'},{icon:'📖',label:'使用指南',path:'/guide'}]
 
 async function createPaper(){
   if(!form.title||!form.major){error.value='请填写标题和专业';return}

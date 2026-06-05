@@ -33,7 +33,7 @@ import dayjs from 'dayjs'
 const sb=ref(window.innerWidth>=1024);const papers=ref([]);const loading=ref(true);const filter=ref('全部');const search=ref('');const page=ref(1);const total=ref(1)
 const statusMap={draft:'草稿',generating:'生成中',completed:'已完成'}
 const fd=d=>d?dayjs(d).format('MM-DD HH:mm'):''
-const navItems=[{icon:'📊',label:'工作台',path:'/dashboard'},{icon:'📚',label:'文献处理',path:'/literature'},{icon:'✍️',label:'论文生成',path:'/paper/create'},{icon:'📝',label:'论文历史',path:'/paper/history'},{icon:'✨',label:'论文润色',path:'/polish'},{icon:'📐',label:'LaTeX',path:'/latex'},{icon:'📅',label:'智能课表',path:'/schedule'},{icon:'📔',label:'云端笔记',path:'/notes'},{icon:'📋',label:'考点题库',path:'/exam'},{icon:'🔬',label:'实验报告',path:'/experiment'},{icon:'💻',label:'代码编辑',path:'/code-editor'},{icon:'🌍',label:'外语学习',path:'/english'}]
+const navItems=[{icon:'📊',label:'工作台',path:'/dashboard'},{icon:'📚',label:'文献处理',path:'/literature'},{icon:'✍️',label:'论文生成',path:'/paper/create'},{icon:'📝',label:'论文历史',path:'/paper/history'},{icon:'✨',label:'论文润色',path:'/polish'},{icon:'📐',label:'LaTeX',path:'/latex'},{icon:'📅',label:'智能课表',path:'/schedule'},{icon:'📔',label:'云端笔记',path:'/notes'},{icon:'📋',label:'考点题库',path:'/exam'},{icon:'🔬',label:'实验报告',path:'/experiment'},{icon:'💻',label:'代码编辑',path:'/code-editor'},{icon:'🌍',label:'外语学习',path:'/english'},{icon:'📖',label:'使用指南',path:'/guide'}]
 
 async function fetchPapers(){
   loading.value=true

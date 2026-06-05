@@ -114,6 +114,7 @@ const quickActions = [
   { icon: '📅', label: '智能课表', desc: '教务导入', path: '/schedule' },
   { icon: '📝', label: '云端笔记', desc: 'AI总结', path: '/notes' },
   { icon: '💻', label: '代码编辑', desc: '在线运行', path: '/code-editor' },
+  { icon: '📖', label: '使用指南', desc: '快速上手', path: '/guide' },
 ]
 
 const navItems = [
@@ -129,6 +130,7 @@ const navItems = [
   { icon: '🔬', label: '实验报告', path: '/experiment' },
   { icon: '💻', label: '代码编辑', path: '/code-editor' },
   { icon: '🌍', label: '外语学习', path: '/english' },
+  { icon: '📖', label: '使用指南', path: '/guide' },
 ]
 
 function formatDate(d) { return d ? dayjs(d).format('MM-DD HH:mm') : '' }
