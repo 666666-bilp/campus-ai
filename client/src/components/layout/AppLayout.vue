@@ -1,12 +1,14 @@
 <template>
   <div class="min-h-screen" style="background-color: var(--color-bg); color: var(--color-text);">
     <!-- Desktop Sidebar -->
-    <AppSidebar
-      :collapsed="sidebarCollapsed"
-      :mobile-open="mobileSidebarOpen"
-      @toggle="sidebarCollapsed = !sidebarCollapsed"
-      @close-mobile="mobileSidebarOpen = false"
-    />
+    <div class="hidden lg:block">
+      <AppSidebar
+        :collapsed="sidebarCollapsed"
+        :mobile-open="false"
+        @toggle="sidebarCollapsed = !sidebarCollapsed"
+        @close-mobile="mobileSidebarOpen = false"
+      />
+    </div>
 
     <!-- Mobile Sidebar -->
     <transition name="slide">

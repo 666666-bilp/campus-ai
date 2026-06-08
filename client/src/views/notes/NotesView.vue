@@ -198,8 +198,8 @@
                 <span>{{ formatDate(note.updatedAt || note.createdAt) }}</span>
               </div>
 
-              <!-- Hover Actions -->
-              <div class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+              <!-- Hover Actions (visible on mobile, hover-reveal on desktop) -->
+              <div class="absolute bottom-2 right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-1">
                 <button
                   @click.stop="handleTogglePin(note)"
                   class="p-1.5 rounded-md text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"

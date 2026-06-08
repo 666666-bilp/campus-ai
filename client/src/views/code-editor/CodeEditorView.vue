@@ -6,9 +6,17 @@
           代码编辑
         </h2>
 
-        <div class="flex-1 flex overflow-hidden rounded-[var(--radius-lg)] border" style="border-color: var(--color-border-light);">
-          <!-- Snippet List Sidebar -->
-          <aside class="w-64 flex-shrink-0 border-r flex flex-col" style="background: var(--color-surface); border-color: var(--color-border-light);">
+        <!-- Mobile Snippet Toggle -->
+        <div class="lg:hidden flex items-center gap-2 mb-2">
+          <button @click="showMobileSnippets = !showMobileSnippets" class="btn-secondary btn-sm flex-1">
+            {{ showMobileSnippets ? '隐藏列表' : '代码列表' }} ({{ filteredSnippets.length }})
+          </button>
+          <button @click="newSnippet" class="btn-primary btn-sm">+ 新建</button>
+        </div>
+
+        <div class="flex-1 flex overflow-hidden rounded-[var(--radius-lg)] border relative" style="border-color: var(--color-border-light);">
+          <!-- Snippet List Sidebar (Desktop) -->
+          <aside class="hidden lg:flex w-64 flex-shrink-0 border-r flex-col" style="background: var(--color-surface); border-color: var(--color-border-light);">
             <div class="p-3 border-b" style="border-color: var(--color-border-light);">
               <button @click="newSnippet" class="btn-primary w-full text-sm">+ 新建代码</button>
             </div>
@@ -44,6 +52,44 @@
             </div>
           </aside>
 
+          <!-- Mobile Snippet Overlay -->
+          <div v-if="showMobileSnippets" class="lg:hidden absolute inset-0 z-10 flex flex-col" style="background: var(--color-surface);">
+            <div class="p-3 border-b flex items-center justify-between" style="border-color: var(--color-border-light);">
+              <span class="text-sm font-medium" style="color: var(--color-text);">代码列表</span>
+              <button @click="showMobileSnippets = false" class="p-1 rounded hover:bg-[var(--color-surface-raised)]" style="color: var(--color-text-muted);">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div class="p-2 flex flex-wrap gap-1 border-b" style="border-color: var(--color-border-light);">
+              <button v-for="lang in languageFilters" :key="lang.value" @click="activeFilter = lang.value"
+                class="px-2 py-1 text-xs rounded-md transition-colors"
+                :class="activeFilter === lang.value
+                  ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium'
+                  : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)]'">
+                {{ lang.label }}
+              </button>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+              <div v-for="snippet in filteredSnippets" :key="snippet._id"
+                @click="selectSnippet(snippet); showMobileSnippets = false"
+                class="p-3 border-b cursor-pointer transition-colors"
+                :class="selected?._id === snippet._id ? 'bg-[var(--color-primary)]/8' : 'hover:bg-[var(--color-surface-raised)]'"
+                style="border-color: var(--color-border-light);">
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <span class="text-sm font-medium truncate" style="color: var(--color-text);">{{ snippet.title || '未命名' }}</span>
+                  <button @click.stop="deleteSnippet(snippet._id)"
+                    class="flex-shrink-0 p-0.5 hover:opacity-70 transition-opacity" style="color: var(--color-danger);" title="删除">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded" :class="languageBadgeClass(snippet.language)">{{ snippet.language || 'text' }}</span>
+                  <span class="text-[10px]" style="color: var(--color-text-muted);">{{ formatDate(snippet.updatedAt) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Editor Area -->
           <div class="flex-1 overflow-y-auto p-4">
             <div v-if="!selected" class="flex items-center justify-center h-full">
@@ -66,7 +112,7 @@
               </div>
 
               <textarea v-model="editCode"
-                class="w-full min-h-[400px] font-mono text-sm p-4 rounded-lg resize-y border focus:outline-none focus:ring-2"
+                class="w-full min-h-[250px] sm:min-h-[400px] font-mono text-sm p-4 rounded-lg resize-y border focus:outline-none focus:ring-2"
                 style="background: var(--color-text); color: #a5d6ff; border-color: transparent;"
                 placeholder="在此编写代码..." spellcheck="false"></textarea>
 
@@ -92,7 +138,7 @@
                 <template v-if="isHtmlOrCss">
                   <button @click="runPreview" class="btn-primary btn-sm mb-3">预览 HTML</button>
                   <iframe v-if="previewSrc" :srcdoc="previewSrc"
-                    class="w-full h-[400px] rounded-lg border bg-white"
+                    class="w-full h-[250px] sm:h-[400px] rounded-lg border bg-white"
                     style="border-color: var(--color-border);"
                     sandbox="allow-scripts allow-same-origin"></iframe>
                 </template>
@@ -155,6 +201,7 @@ const sharing = ref(false);
 const previewSrc = ref('');
 const shareModalOpen = ref(false);
 const shareUrl = ref('');
+const showMobileSnippets = ref(false);
 
 const isHtmlOrCss = computed(() => {
   const lang = editLanguage.value.toLowerCase();

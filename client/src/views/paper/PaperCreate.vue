@@ -19,7 +19,7 @@
               <label class="label">所属专业 <span style="color: var(--color-danger);">*</span></label>
               <input v-model="form.major" class="input" placeholder="如：计算机科学与技术" required />
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="label">论文类型</label>
                 <select v-model="form.paperType" class="input">

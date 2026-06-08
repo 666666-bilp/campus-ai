@@ -12,7 +12,7 @@
           </router-link>
         </div>
 
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           <button v-for="f in filters" :key="f" @click="filter = f; page = 1; fetchPapers()"
             :class="filter === f ? 'btn-primary btn-sm' : 'btn-outline btn-sm'">{{ f }}</button>
           <input v-model="search" class="input flex-1 !ml-2" placeholder="搜索论文..." @input="fetchPapers" />
