@@ -499,8 +499,10 @@ ${paper.paperType}
 
     const userPrompt = `请为以下论文题目撰写完整的毕业论文：\n题目：${paper.topic}\n专业：${paper.major}\n类型：${paper.paperType}\n目标字数：${paper.wordCount}字\n\n请严格按照系统提示中的格式要求生成。`;
 
+    const messages = buildMessages(systemPrompt, userPrompt);
+
     const result = await callAI(messages, {
-      maxTokens: Math.min(paper.wordCount * 2, 8000),
+      maxTokens: Math.min(paper.wordCount * 3, 16000),
     });
 
     if (!result.success) {
@@ -607,8 +609,11 @@ ${paper.paperType}
 - 参考文献格式示例：[1] 作者. 题名[J]. 刊名, 年, 卷(期): 起止页码.`;
 
     const userPrompt = `请为以下论文题目撰写完整的毕业论文：\n题目：${paper.topic}\n专业：${paper.major}\n类型：${paper.paperType}\n目标字数：${paper.wordCount}字\n\n请严格按照系统提示中的格式要求生成。`;
+
+    const messages = buildMessages(systemPrompt, userPrompt);
+
     const stream = streamAI(messages, {
-      maxTokens: Math.min(paper.wordCount * 2, 8000),
+      maxTokens: Math.min(paper.wordCount * 3, 16000),
     });
 
     for await (const chunk of stream) {
