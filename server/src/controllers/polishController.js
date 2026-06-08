@@ -7,17 +7,17 @@ const aiService = require('../services/aiService');
  */
 const polishText = async (req, res, next) => {
   try {
-    const { text, mode, action } = req.body;
+    const { text, discipline, actionType } = req.body;
 
     if (!text) {
       return error(res, '请输入需要处理的文本', 400);
     }
 
-    const result = await aiService.polishText(
-      text,
-      mode || 'science',
-      action || 'polish'
-    );
+    const modeMap = { liberal_arts: 'liberal', science: 'science', business: 'business' };
+    const mode = modeMap[discipline] || 'science';
+    const action = actionType || 'polish';
+
+    const result = await aiService.polishText(text, mode, action);
 
     if (!result.success) {
       return error(res, 'Polish failed: ' + (result.error || 'Unknown error'), 500);

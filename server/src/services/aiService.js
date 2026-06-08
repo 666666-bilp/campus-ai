@@ -173,6 +173,10 @@ async function polishText(text, mode, action) {
 
   const prompt = `You are a professional text editor. ${actionMap[action]}
 
+CRITICAL: The output language MUST match the original text's language.
+- If the original is in Chinese (中文), the "polished" field and all "suggestion"/"reason" fields MUST be in Chinese.
+- If the original is in English, output in English.
+
 Writing style context: ${modeMap[mode]}
 
 Original text:
@@ -183,13 +187,13 @@ ${text}
 Return a JSON object:
 {
   "original": "the exact original text",
-  "polished": "the fully improved/edited text",
+  "polished": "the fully improved/edited text (same language as original)",
   "changes": [
     {
       "type": "grammar" | "style" | "clarity" | "structure",
       "original": "the original text fragment",
-      "suggestion": "the revised version",
-      "reason": "brief explanation"
+      "suggestion": "the revised version (same language as original)",
+      "reason": "brief explanation (same language as original)"
     }
   ]
 }
