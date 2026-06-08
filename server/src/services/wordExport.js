@@ -30,10 +30,10 @@ const FIRST_LINE_INDENT = convertMillimetersToTwip(7.5);
 
 // ==================== Markdown 解析 ====================
 
-/** 匹配 Markdown 标题，返回 { level: 1|2|3, text: string } 或 null */
+/** 匹配 Markdown 标题（支持 # ~ #### 四级标题），返回 { level: 1|2|3|4, text: string } */
 function matchHeading(line) {
   const trimmed = line.trim();
-  const m = trimmed.match(/^(#{1,3})\s+(.+)/);
+  const m = trimmed.match(/^(#{1,4})\s+(.+)/);
   if (!m) return null;
   return { level: m[1].length, text: m[2].trim() };
 }
@@ -118,9 +118,9 @@ function matchNumbered(line) {
 function contentToParagraphs(contentText) {
   if (!contentText || !contentText.trim()) return [];
 
-  // 先清除所有行首的残余 # 标记
+  // 先清除所有行首的残余 # 标记（包括任意数量#）
   const cleaned = contentText.split('\n')
-    .map(l => l.replace(/^#{1,3}\s+/, '').trimEnd())
+    .map(l => l.replace(/^#+\s+/, '').trimEnd())
     .join('\n');
 
   if (!cleaned.trim()) return [];
@@ -207,11 +207,13 @@ function centeredParagraph(text, size, font, bold = false) {
 
 /** 根据 markdown 标题级别创建 Word 标题段落 */
 function createHeadingParagraph(text, level) {
-  const size = level === 1 ? SIZE_H1 : level === 2 ? SIZE_H2 : SIZE_H3;
-  const hLevel = level === 1 ? HeadingLevel.HEADING_1 : level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3;
+  const sizeMap = { 1: SIZE_H1, 2: SIZE_H2, 3: SIZE_H3, 4: SIZE_BODY };
+  const hLevelMap = { 1: HeadingLevel.HEADING_1, 2: HeadingLevel.HEADING_2, 3: HeadingLevel.HEADING_3, 4: HeadingLevel.HEADING_4 };
+  const size = sizeMap[level] || SIZE_BODY;
+  const hLevel = hLevelMap[level] || HeadingLevel.HEADING_4;
   return new Paragraph({
     alignment: level === 1 ? AlignmentType.CENTER : AlignmentType.LEFT,
-    spacing: { before: level === 1 ? 200 : 150, after: level === 1 ? 100 : 80, line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
+    spacing: { before: level <= 2 ? 200 : 120, after: level <= 2 ? 100 : 60, line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
     heading: hLevel,
     children: [
       new TextRun({
