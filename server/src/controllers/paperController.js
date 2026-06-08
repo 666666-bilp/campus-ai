@@ -495,6 +495,7 @@ ${paper.paperType}
 - 正文字数约${paper.wordCount}字
 - 使用 Markdown 格式输出（# 标题、## 章节、### 小节）
 - 每个章节要有实质性内容，不可空洞
+- 禁止使用无序列表符号（- 或 * 开头的圆点），改用数字编号（1. 2. 3.）或直接段落叙述
 - 参考文献格式示例：[1] 作者. 题名[J]. 刊名, 年, 卷(期): 起止页码.`;
 
     const userPrompt = `请为以下论文题目撰写完整的毕业论文：\n题目：${paper.topic}\n专业：${paper.major}\n类型：${paper.paperType}\n目标字数：${paper.wordCount}字\n\n请严格按照系统提示中的格式要求生成。`;
@@ -606,6 +607,7 @@ ${paper.paperType}
 - 正文字数约${paper.wordCount}字
 - 使用 Markdown 格式输出（# 标题、## 章节、### 小节）
 - 每个章节要有实质性内容，不可空洞
+- 禁止使用无序列表符号（- 或 * 开头的圆点），改用数字编号（1. 2. 3.）或直接段落叙述
 - 参考文献格式示例：[1] 作者. 题名[J]. 刊名, 年, 卷(期): 起止页码.`;
 
     const userPrompt = `请为以下论文题目撰写完整的毕业论文：\n题目：${paper.topic}\n专业：${paper.major}\n类型：${paper.paperType}\n目标字数：${paper.wordCount}字\n\n请严格按照系统提示中的格式要求生成。`;
