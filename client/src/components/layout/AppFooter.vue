@@ -1,10 +1,7 @@
 <template>
-  <footer class="border-t border-gray-200 dark:border-gray-700 py-4 text-center">
-    <p class="text-xs text-gray-400 dark:text-gray-500">
-      &copy; 2024 大学生学术AI助手 | 让学术更智能
+  <footer class="border-t py-5 text-center" style="border-color: var(--color-border-light);">
+    <p class="text-xs" style="color: var(--color-text-muted); letter-spacing: 0.03em;">
+      &copy; 2026 学术AI助手 &middot; 让学术更智能
     </p>
   </footer>
 </template>
-
-<script setup>
-</script>
