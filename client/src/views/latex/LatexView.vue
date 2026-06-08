@@ -304,17 +304,31 @@ function encodeLatexForUrl(latex) {
     .replace(/~/g, '%7E')
 }
 
+function extractPreviewLatex(latex) {
+  // 如果包含 \documentclass，提取 \begin{document} 和 \end{document} 之间的内容
+  const docMatch = latex.match(/\\begin\{document\}([\s\S]*?)\\end\{document\}/)
+  if (docMatch) {
+    // 去掉 preamble 命令，只保留数学环境内容
+    return docMatch[1]
+      .replace(/\\maketitle/g, '')
+      .replace(/\\section\*?\{[^}]*\}/g, '')
+      .replace(/\\section\{[^}]*\}/g, '')
+      .trim()
+  }
+  return latex.trim()
+}
+
 function handlePreview() {
   if (!latexCode.value.trim()) return
 
   previewLoading.value = true
   previewError.value = false
 
-  const encoded = encodeLatexForUrl(latexCode.value.trim())
+  const cleanLatex = extractPreviewLatex(latexCode.value.trim())
+  const encoded = encodeLatexForUrl(cleanLatex)
 
-  // Small timeout to ensure the img tag re-renders even with same URL
   previewUrl.value = `https://latex.codecogs.com/svg.image?${encoded}&t=${Date.now()}`
-  previewAlt.value = latexCode.value.trim()
+  previewAlt.value = cleanLatex
 
   addToRecent(latexCode.value.trim(), '')
   previewLoading.value = false

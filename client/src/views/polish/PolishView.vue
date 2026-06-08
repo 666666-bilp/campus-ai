@@ -322,7 +322,7 @@ async function handlePolish() {
   loading.value = true
 
   try {
-    const res = await polishAPI.polish({
+    const res = await polishAPI.polishText({
       text: inputText.value.trim(),
       discipline: discipline.value,
       actionType: actionType.value

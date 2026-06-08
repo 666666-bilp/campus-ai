@@ -4,9 +4,11 @@ const { success, error } = require('../utils/response');
 
 exports.bilingualReading = async (req, res, next) => {
   try {
-    const { text, targetLang } = req.body;
+    const { text, direction } = req.body;
     if (!text) return error(res, '请输入需要翻译的文本', 400);
-    const result = await aiService.translateText(text, targetLang || 'zh');
+    // direction: 'zh2en' → 中文译英文, 'en2zh' → 英文译中文
+    const targetLang = direction === 'zh2en' ? 'en' : direction === 'en2zh' ? 'zh' : 'en';
+    const result = await aiService.translateText(text, targetLang);
     if (!result.success) {
       return error(res, 'Translation failed: ' + (result.error || 'Unknown error'), 500);
     }

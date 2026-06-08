@@ -2,6 +2,9 @@ const Document = require('../models/Document');
 const aiService = require('../services/aiService');
 const { success, error, paginated } = require('../utils/response');
 const { uploadFile, deleteFile, extractPublicId } = require('../config/cloudinary');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 // pdf-parse may not be installed in all environments; load it lazily
 let pdfParse = null;
@@ -11,9 +14,17 @@ try {
   // pdf-parse is optional — extractText will return an error if called without it
 }
 
+const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+
+/** Check if Cloudinary is properly configured */
+function isCloudinaryConfigured() {
+  return !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+}
+
 /**
  * POST /api/documents/upload
- * Upload a file via multer (req.file), store it on Cloudinary, and create a Document record.
+ * Upload a file via multer (req.file), store it on Cloudinary or locally, and create a Document record.
  */
 async function upload(req, res, next) {
   try {
@@ -38,17 +49,30 @@ async function upload(req, res, next) {
             ? 'txt'
             : 'pdf'; // fallback
 
-    // Upload buffer to Cloudinary
-    const result = await uploadFile(file.buffer, {
-      folder: `academic-ai-platform/documents/${req.user._id}`,
-      resource_type: 'raw',
-    });
+    let fileUrl;
+
+    if (isCloudinaryConfigured()) {
+      // Upload to Cloudinary
+      const result = await uploadFile(file.buffer, {
+        folder: `academic-ai-platform/documents/${req.user._id}`,
+        resource_type: 'raw',
+      });
+      fileUrl = result.secure_url;
+    } else {
+      // Fallback to local storage
+      const uniqueName = `${uuidv4()}_${file.originalname}`;
+      const userDir = path.join(UPLOADS_DIR, String(req.user._id));
+      if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+      const localPath = path.join(userDir, uniqueName);
+      fs.writeFileSync(localPath, file.buffer);
+      fileUrl = `/uploads/${req.user._id}/${uniqueName}`;
+    }
 
     const document = await Document.create({
       userId: req.user._id,
       title: title.trim(),
       fileName: file.originalname,
-      fileUrl: result.secure_url,
+      fileUrl,
       fileType,
       fileSize: file.size,
       status: 'processing',
