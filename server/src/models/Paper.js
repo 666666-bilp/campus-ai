@@ -27,7 +27,7 @@ const paperSchema = new mongoose.Schema({
     }]
   },
   fullText: { type: String, default: '' },
-  format: { type: String, enum: ['markdown', 'txt'], default: 'markdown' },
+  format: { type: String, enum: ['markdown', 'txt', 'docx'], default: 'markdown' },
   status: { type: String, enum: ['draft', 'generating', 'completed'], default: 'draft' },
   version: { type: Number, default: 1 }
 }, { timestamps: true });

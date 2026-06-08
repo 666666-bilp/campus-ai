@@ -342,10 +342,40 @@ async function generateSection(req, res, next) {
     ].filter(Boolean).join('\n\n');
 
     const sectionPrompts = {
-      abstract: `请为以下论文生成一个300字左右的中文摘要，要求学术严谨、语言精炼。\n论文题目：${paper.title}\n专业：${paper.major}\n类型：${paper.paperType}\n${contextSnippet ? '已有内容参考：\n' + contextSnippet : ''}\n请直接输出摘要内容，不要包含"摘要："等前缀。`,
-      keywords: `请根据以下论文信息，提取5-8个中文学术关键词。\n论文题目：${paper.title}\n${existingAbstract ? '摘要：' + existingAbstract : ''}\n输出格式：["关键词1", "关键词2", ...]\n只输出JSON数组，不要其他内容。`,
-      introduction: `请为以下学术论文撰写绪论/引言部分（约800字）。\n论文题目：${paper.title}\n专业：${paper.major}\n类型：${paper.paperType}\n${contextSnippet ? '已有内容参考：\n' + contextSnippet : ''}\n请直接输出绪论内容。`,
-      conclusion: `请为以下学术论文撰写结论部分（约500字）。\n论文题目：${paper.title}\n专业：${paper.major}\n${contextSnippet ? '已有内容参考：\n' + contextSnippet : ''}\n请直接输出结论内容。`,
+      abstract: `你是一名学术写作导师。请为以下论文撰写中文摘要（200-300字），要求：
+- 简要说明研究背景与目的
+- 概括研究方法与过程
+- 总结主要发现与结论
+- 语言精炼、学术严谨
+论文题目：${paper.title}
+专业：${paper.major}
+类型：${paper.paperType}
+${contextSnippet ? '已有内容参考：\n' + contextSnippet : ''}
+请直接输出摘要正文，不要包含"摘要："标签。`,
+      keywords: `请根据以下论文信息，提取5-8个中文学术关键词。
+论文题目：${paper.title}
+${existingAbstract ? '摘要：' + existingAbstract : ''}
+输出格式：["关键词1", "关键词2", ...]
+关键词应涵盖研究领域、核心概念、方法等。只输出JSON数组。`,
+      introduction: `你是一名学术写作导师。请为以下论文撰写绪论部分（800-1000字），包含：
+1. 研究背景与意义（为什么研究这个问题）
+2. 国内外研究现状（前人做了什么、有什么不足）
+3. 研究内容与方法（本文要做什么、怎么做）
+4. 论文结构安排（各章节概要）
+论文题目：${paper.title}
+专业：${paper.major}
+类型：${paper.paperType}
+${contextSnippet ? '已有内容参考：\n' + contextSnippet : ''}
+使用正式学术语言，直接输出绪论内容。`,
+      conclusion: `你是一名学术写作导师。请为以下论文撰写结论部分（500-800字），包含：
+1. 研究工作总结（完成了什么、得到什么结论）
+2. 创新点或特色
+3. 不足与局限性
+4. 未来研究方向
+论文题目：${paper.title}
+专业：${paper.major}
+${contextSnippet ? '已有内容参考：\n' + contextSnippet : ''}
+直接输出结论内容。`,
     };
 
     const prompt = sectionPrompts[sectionName];
@@ -441,16 +471,33 @@ async function generateFull(req, res, next) {
     paper.status = 'generating';
     await paper.save();
 
-    // Build messages manually to have control over the prompt
-    const systemPrompt = `你是专业的学术论文写手，请根据以下要求生成完整的学术论文。要求：
-1. 结构完整：包含摘要、关键词、绪论、正文（多个章节）、结论、参考文献
-2. 学术规范：语言严谨、逻辑清晰、引用规范
-3. 格式：使用Markdown格式
-4. 字数：约${paper.wordCount}字`;
+    const systemPrompt = `你是一名资深的高校毕业论文指导教师。请严格按照以下标准，为一名大学${paper.major}专业的学生撰写一篇完整的学术论文。
 
-    const userPrompt = `题目：${paper.topic}\n专业：${paper.major}\n类型：${paper.paperType}\n请生成完整论文。`;
+# 论文类型
+${paper.paperType}
 
-    const messages = buildMessages(systemPrompt, userPrompt);
+# 格式要求（必须严格遵守）
+
+## 论文结构（按顺序）
+1. **中文摘要**（200-300字）：概括研究背景、目的、方法、主要内容和结论
+2. **中文关键词**（3-8个）：用分号分隔
+3. **英文摘要（Abstract）**：与中文摘要对应，英文撰写
+4. **英文关键词（Keywords）**：与中文关键词对应
+5. **绪论**：阐述研究背景与意义、国内外研究现状、研究内容与方法、论文结构安排
+6. **相关理论与技术基础**：介绍论文涉及的核心概念、理论框架或技术栈
+7. **主体章节**（2-3章）：根据论文类型组织，如系统设计与实现、实验设计与数据分析、案例分析与讨论等
+8. **结论**：总结研究工作、指出创新点与不足、展望未来方向
+9. **致谢**：对指导老师、同学、家人等的致谢
+10. **参考文献**：列出5-10篇参考文献（GB/T 7714格式）
+
+## 写作规范
+- 使用学术语言，客观严谨，避免口语化
+- 正文字数约${paper.wordCount}字
+- 使用 Markdown 格式输出（# 标题、## 章节、### 小节）
+- 每个章节要有实质性内容，不可空洞
+- 参考文献格式示例：[1] 作者. 题名[J]. 刊名, 年, 卷(期): 起止页码.`;
+
+    const userPrompt = `请为以下论文题目撰写完整的毕业论文：\n题目：${paper.topic}\n专业：${paper.major}\n类型：${paper.paperType}\n目标字数：${paper.wordCount}字\n\n请严格按照系统提示中的格式要求生成。`;
 
     const result = await callAI(messages, {
       maxTokens: Math.min(paper.wordCount * 2, 8000),
@@ -533,17 +580,33 @@ async function streamGenerate(req, res, next) {
 
     let fullText = '';
 
-    const systemPrompt = `你是专业的学术论文写手，请根据以下要求生成完整的学术论文。要求：
-1. 结构完整：包含摘要、关键词、绪论、正文（多个章节）、结论、参考文献
-2. 学术规范：语言严谨、逻辑清晰、引用规范
-3. 格式：使用Markdown格式
-4. 字数：约${paper.wordCount}字`;
+    const systemPrompt = `你是一名资深的高校毕业论文指导教师。请严格按照以下标准，为一名大学${paper.major}专业的学生撰写一篇完整的学术论文。
 
-    const userPrompt = `题目：${paper.topic}\n专业：${paper.major}\n类型：${paper.paperType}\n请生成完整论文。`;
+# 论文类型
+${paper.paperType}
 
-    const messages = buildMessages(systemPrompt, userPrompt);
+# 格式要求（必须严格遵守）
 
-    // Use the streamAI generator for SSE-compatible streaming
+## 论文结构（按顺序）
+1. **中文摘要**（200-300字）：概括研究背景、目的、方法、主要内容和结论
+2. **中文关键词**（3-8个）：用分号分隔
+3. **英文摘要（Abstract）**：与中文摘要对应，英文撰写
+4. **英文关键词（Keywords）**：与中文关键词对应
+5. **绪论**：阐述研究背景与意义、国内外研究现状、研究内容与方法、论文结构安排
+6. **相关理论与技术基础**：介绍论文涉及的核心概念、理论框架或技术栈
+7. **主体章节**（2-3章）：根据论文类型组织，如系统设计与实现、实验设计与数据分析、案例分析与讨论等
+8. **结论**：总结研究工作、指出创新点与不足、展望未来方向
+9. **致谢**：对指导老师、同学、家人等的致谢
+10. **参考文献**：列出5-10篇参考文献（GB/T 7714格式）
+
+## 写作规范
+- 使用学术语言，客观严谨，避免口语化
+- 正文字数约${paper.wordCount}字
+- 使用 Markdown 格式输出（# 标题、## 章节、### 小节）
+- 每个章节要有实质性内容，不可空洞
+- 参考文献格式示例：[1] 作者. 题名[J]. 刊名, 年, 卷(期): 起止页码.`;
+
+    const userPrompt = `请为以下论文题目撰写完整的毕业论文：\n题目：${paper.topic}\n专业：${paper.major}\n类型：${paper.paperType}\n目标字数：${paper.wordCount}字\n\n请严格按照系统提示中的格式要求生成。`;
     const stream = streamAI(messages, {
       maxTokens: Math.min(paper.wordCount * 2, 8000),
     });
@@ -617,11 +680,28 @@ async function exportPaper(req, res, next) {
 
     const format = (req.params.format || 'md').toLowerCase();
 
-    if (!['txt', 'md'].includes(format)) {
-      return error(res, 'Unsupported export format. Use "txt" or "md".', 400);
+    if (!['txt', 'md', 'docx'].includes(format)) {
+      return error(res, 'Unsupported export format. Use "txt", "md" or "docx".', 400);
     }
 
-    // If fullText is available, use it; otherwise reconstruct from content fields
+    // DOCX export — generate formatted Word document
+    if (format === 'docx') {
+      try {
+        const { generateWordDocument } = require('../services/wordExport');
+        const docxBuffer = await generateWordDocument(paper);
+
+        const sanitizedTitle = paper.title.replace(/[<>:"/\\|?*]/g, '_').slice(0, 100);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(sanitizedTitle)}.docx"`);
+        res.setHeader('Content-Length', docxBuffer.length);
+        return res.send(docxBuffer);
+      } catch (docxErr) {
+        console.error('DOCX generation error:', docxErr.message);
+        return error(res, 'Word文档生成失败，请先生成论文全文。', 500);
+      }
+    }
+
+    // Text / Markdown export
     let body = paper.fullText;
     if (!body || body.trim().length === 0) {
       const parts = [];
