@@ -28,244 +28,17 @@ const MARGIN_RIGHT = convertMillimetersToTwip(25);
 
 const FIRST_LINE_INDENT = convertMillimetersToTwip(7.5);
 
-// ==================== Markdown → Word 转换核心 ====================
+// ==================== Markdown 解析 ====================
 
-/**
- * 解析一行中的内联 Markdown：**粗体**、*斜体*
- * 返回 TextRun 数组
- */
-function parseInlineRuns(text) {
-  if (!text) return [new TextRun({ text: '', font: { ascii: FONT_ENGLISH, eastAsia: FONT_BODY }, size: SIZE_BODY })];
-
-  const runs = [];
-  // 匹配 **粗体** 或 *斜体*
-  const regex = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
-  let lastIdx = 0;
-  let m;
-
-  while ((m = regex.exec(text)) !== null) {
-    // 匹配前的普通文本
-    if (m.index > lastIdx) {
-      runs.push(makeRun(text.slice(lastIdx, m.index), false, false));
-    }
-    if (m[1]) {
-      // **粗体**
-      runs.push(makeRun(m[2], true, false));
-    } else if (m[3]) {
-      // *斜体*
-      runs.push(makeRun(m[4], false, true));
-    }
-    lastIdx = m.index + m[0].length;
-  }
-
-  // 剩余文本
-  if (lastIdx < text.length) {
-    runs.push(makeRun(text.slice(lastIdx), false, false));
-  }
-
-  return runs.length > 0 ? runs : [makeRun(text, false, false)];
-}
-
-function makeRun(text, bold, italics) {
-  return new TextRun({
-    text,
-    font: { ascii: FONT_ENGLISH, eastAsia: FONT_BODY },
-    size: SIZE_BODY,
-    bold,
-    italics,
-  });
-}
-
-function makeRefRun(text) {
-  return new TextRun({
-    text,
-    font: { ascii: FONT_ENGLISH, eastAsia: FONT_BODY },
-    size: SIZE_REF,
-  });
-}
-
-function makeHeadingRun(text, size) {
-  return new TextRun({
-    text,
-    font: { ascii: FONT_ENGLISH, eastAsia: FONT_HEADING },
-    size,
-    bold: true,
-  });
-}
-
-/** 检测一行是否是 Markdown 标题，返回 { level: 1|2|3, text: string } 或 null */
+/** 匹配 Markdown 标题，返回 { level: 1|2|3, text: string } 或 null */
 function matchHeading(line) {
-  const m = line.match(/^#{1,3}\s+(.+)/);
+  const trimmed = line.trim();
+  const m = trimmed.match(/^(#{1,3})\s+(.+)/);
   if (!m) return null;
-  return { level: m[0].startsWith('###') ? 3 : m[0].startsWith('##') ? 2 : 1, text: m[1].trim() };
+  return { level: m[1].length, text: m[2].trim() };
 }
 
-/** 检测一行是否是 Markdown 无序列表 */
-function matchBullet(line) {
-  const m = line.match(/^[\-\*]\s+(.+)/);
-  return m ? m[1].trim() : null;
-}
-
-/** 检测一行是否是数字编号列表（含中文数字） */
-function matchNumbered(line) {
-  const m = line.match(/^(\d+[\.\)、]\s*|（[一二三四五六七八九十]+）|\(?\d+\))\s*(.+)/);
-  return m ? { prefix: m[1], text: m[2].trim() } : null;
-}
-
-/**
- * 将内容文本（可能是 markdown 或纯文本）按行解析为 Word Paragraph 数组。
- * 处理标题、列表、粗体等。
- */
-function contentToParagraphs(contentText, options = {}) {
-  if (!contentText || !contentText.trim()) return [];
-  const lines = contentText.split('\n');
-  const paragraphs = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    let line = lines[i].trim();
-
-    // 跳过空行
-    if (!line) {
-      // 如果上一段不是空行，加一个段间距
-      if (paragraphs.length > 0 && !(paragraphs[paragraphs.length - 1] instanceof Paragraph === false)) {
-        // 不额外插入空段落，靠段落 spacing 控制
-      }
-      i++;
-      continue;
-    }
-
-    // 去除行内 ## 标记（AI 有时在正文中使用）
-    line = line.replace(/^#{1,3}\s+/g, '');
-
-    // 标题检测
-    const heading = matchHeading(lines[i]);
-    if (heading && heading.text.length < 50) {
-      const level = options.headingLevel || heading.level;
-      const size = level === 1 ? SIZE_H1 : level === 2 ? SIZE_H2 : SIZE_H3;
-      const hLevel = level === 1 ? HeadingLevel.HEADING_1 : level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3;
-      paragraphs.push(new Paragraph({
-        alignment: level === 1 ? AlignmentType.CENTER : AlignmentType.LEFT,
-        spacing: { before: 200, after: 100, line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
-        heading: hLevel,
-        children: [makeHeadingRun(heading.text, size)],
-      }));
-      i++;
-      continue;
-    }
-
-    // 无序列表 — 去掉圆点，改为普通正文段落
-    const bulletText = matchBullet(lines[i]);
-    if (bulletText) {
-      paragraphs.push(new Paragraph({
-        alignment: AlignmentType.JUSTIFIED,
-        spacing: { line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
-        indent: { firstLine: FIRST_LINE_INDENT },
-        children: parseInlineRuns(bulletText),
-      }));
-      i++;
-      continue;
-    }
-
-    // 数字编号列表 — 保留编号，正文样式
-    const numbered = matchNumbered(line);
-    if (numbered) {
-      const fullText = `${numbered.prefix} ${numbered.text}`;
-      paragraphs.push(new Paragraph({
-        alignment: AlignmentType.JUSTIFIED,
-        spacing: { line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
-        indent: { firstLine: FIRST_LINE_INDENT },
-        children: parseInlineRuns(fullText),
-      }));
-      i++;
-      continue;
-    }
-
-    // 普通段落 — 收集连续的非特殊行，合并为一个段落
-    let paraLines = [line];
-    i++;
-    while (i < lines.length) {
-      const nl = lines[i].trim();
-      if (!nl || matchHeading(lines[i]) || matchBullet(lines[i]) || matchNumbered(nl)) break;
-      paraLines.push(nl);
-      i++;
-    }
-
-    // 拼接段落文本，将行内 ** 和 * 保留用于 inline 解析
-    const paraText = paraLines.join(' ');
-    if (paraText.trim()) {
-      paragraphs.push(new Paragraph({
-        alignment: AlignmentType.JUSTIFIED,
-        spacing: { line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
-        indent: { firstLine: FIRST_LINE_INDENT },
-        children: parseInlineRuns(paraText),
-      }));
-    }
-  }
-
-  return paragraphs;
-}
-
-// ==================== 辅助函数 ====================
-
-function emptyLine() {
-  return new Paragraph({ spacing: { line: LINE_HEIGHT_15 }, children: [] });
-}
-
-function centeredParagraph(text, size, font, bold = false) {
-  return new Paragraph({
-    alignment: AlignmentType.CENTER,
-    spacing: { line: LINE_HEIGHT_20, lineRule: LineRuleType.AUTO },
-    children: [
-      new TextRun({
-        text,
-        font: { ascii: FONT_ENGLISH, eastAsia: font || FONT_BODY },
-        size,
-        bold,
-      }),
-    ],
-  });
-}
-
-/** 用于分隔 `## 章节名` 的大标题 */
-function sectionHeading(text) {
-  return new Paragraph({
-    alignment: AlignmentType.CENTER,
-    spacing: { before: 200, after: 100, line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
-    heading: HeadingLevel.HEADING_1,
-    children: [makeHeadingRun(text, SIZE_H1)],
-  });
-}
-
-/** 从 fullText 中提取指定章节内容（更鲁棒的匹配） */
-function extractSectionContent(fullText, patterns) {
-  if (!fullText) return '';
-  const lines = fullText.split('\n');
-  let inSection = false;
-  let content = [];
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    // 检查是否匹配目标章节
-    for (const pattern of patterns) {
-      if (trimmed.match(new RegExp(`^#{1,3}\\s+.*${pattern}`)) || trimmed.match(new RegExp(`^.*${pattern}[：:]*$`))) {
-        inSection = true;
-        content = [];
-        break;
-      }
-    }
-    // 检查是否是下一个章节（结束当前章节）
-    if (inSection && trimmed.match(/^#{1,3}\s+/) && !patterns.some(p => trimmed.includes(p))) {
-      break;
-    }
-    if (inSection && trimmed && !trimmed.match(/^#{1,3}\s+/)) {
-      content.push(line);
-    }
-  }
-  return content.join('\n').trim();
-}
-
-/** 从 fullText 提取章节标题和内容 */
+/** 将全文档按 Markdown 标题拆分为章节 */
 function parseAllSections(fullText) {
   if (!fullText) return [];
   const lines = fullText.split('\n');
@@ -285,40 +58,204 @@ function parseAllSections(fullText) {
   return sections;
 }
 
+// ==================== 内联 Markdown → TextRun 转换 ====================
+
+function makeRun(text, bold, italics, size = SIZE_BODY) {
+  return new TextRun({
+    text,
+    font: { ascii: FONT_ENGLISH, eastAsia: bold ? FONT_HEADING : FONT_BODY },
+    size,
+    bold,
+    italics,
+  });
+}
+
+/** 解析 **粗体** *斜体* 为 TextRun 数组 */
+function parseInlineRuns(text, options = {}) {
+  if (!text) return [makeRun('', false, false, options.size || SIZE_BODY)];
+  const size = options.size || SIZE_BODY;
+  const runs = [];
+  const regex = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
+  let lastIdx = 0;
+  let m;
+
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > lastIdx) {
+      runs.push(makeRun(text.slice(lastIdx, m.index), false, false, size));
+    }
+    if (m[1]) {
+      runs.push(makeRun(m[2], true, false, size));   // **粗体**
+    } else if (m[3]) {
+      runs.push(makeRun(m[4], false, true, size));   // *斜体*
+    }
+    lastIdx = m.index + m[0].length;
+  }
+  if (lastIdx < text.length) {
+    runs.push(makeRun(text.slice(lastIdx), false, false, size));
+  }
+  return runs.length > 0 ? runs : [makeRun(text, false, false, size)];
+}
+
+/** 匹配无序列表项 */
+function isBullet(line) {
+  return /^[\-\*]\s+/.test(line.trim());
+}
+
+/** 匹配数字编号列表项 */
+function matchNumbered(line) {
+  const trimmed = line.trim();
+  const m = trimmed.match(/^(\d+[\.\)、]\s*|（[一二三四五六七八九十]+）)\s*(.+)/);
+  return m ? { full: trimmed } : null;
+}
+
+// ==================== 内容 → 段落转换（不再检测标题） ====================
+
+/**
+ * 将内容文本转为 Word Paragraph 数组。
+ * 内容中不应再包含 Markdown 标题（已被 parseAllSections 提取），
+ * 但会清理残留的 # 标记、处理粗体斜体、处理列表。
+ */
+function contentToParagraphs(contentText) {
+  if (!contentText || !contentText.trim()) return [];
+
+  // 先清除所有行首的残余 # 标记
+  const cleaned = contentText.split('\n')
+    .map(l => l.replace(/^#{1,3}\s+/, '').trimEnd())
+    .join('\n');
+
+  if (!cleaned.trim()) return [];
+
+  const lines = cleaned.split('\n');
+  const paragraphs = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // 空行 → 跳过（段落间距由 spacing 控制）
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
+
+    // 残余的无序列表 → 去掉圆点符号，转正文
+    if (isBullet(line)) {
+      const text = line.replace(/^[\-\*]\s+/, '').trim();
+      paragraphs.push(new Paragraph({
+        alignment: AlignmentType.JUSTIFIED,
+        spacing: { line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
+        indent: { firstLine: FIRST_LINE_INDENT },
+        children: parseInlineRuns(text),
+      }));
+      i++;
+      continue;
+    }
+
+    // 数字列表 → 保留编号
+    const num = matchNumbered(line);
+    if (num) {
+      paragraphs.push(new Paragraph({
+        alignment: AlignmentType.JUSTIFIED,
+        spacing: { line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
+        indent: { firstLine: FIRST_LINE_INDENT },
+        children: parseInlineRuns(num.full),
+      }));
+      i++;
+      continue;
+    }
+
+    // 普通段落 — 收集连续行合并
+    let paraLines = [line.trim()];
+    i++;
+    while (i < lines.length) {
+      const nl = lines[i].trim();
+      if (!nl || isBullet(lines[i]) || matchNumbered(nl)) break;
+      paraLines.push(nl);
+      i++;
+    }
+    const paraText = paraLines.join('');
+    if (paraText.trim()) {
+      paragraphs.push(new Paragraph({
+        alignment: AlignmentType.JUSTIFIED,
+        spacing: { line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
+        indent: { firstLine: FIRST_LINE_INDENT },
+        children: parseInlineRuns(paraText),
+      }));
+    }
+  }
+
+  return paragraphs;
+}
+
+// ==================== 辅助 ====================
+
+function emptyLine() {
+  return new Paragraph({ spacing: { line: LINE_HEIGHT_15 }, children: [] });
+}
+
+function centeredParagraph(text, size, font, bold = false) {
+  return new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { line: LINE_HEIGHT_20, lineRule: LineRuleType.AUTO },
+    children: [
+      new TextRun({
+        text, font: { ascii: FONT_ENGLISH, eastAsia: font || FONT_BODY }, size, bold,
+      }),
+    ],
+  });
+}
+
+/** 根据 markdown 标题级别创建 Word 标题段落 */
+function createHeadingParagraph(text, level) {
+  const size = level === 1 ? SIZE_H1 : level === 2 ? SIZE_H2 : SIZE_H3;
+  const hLevel = level === 1 ? HeadingLevel.HEADING_1 : level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3;
+  return new Paragraph({
+    alignment: level === 1 ? AlignmentType.CENTER : AlignmentType.LEFT,
+    spacing: { before: level === 1 ? 200 : 150, after: level === 1 ? 100 : 80, line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
+    heading: hLevel,
+    children: [
+      new TextRun({
+        text,
+        font: { ascii: FONT_ENGLISH, eastAsia: FONT_HEADING },
+        size,
+        bold: true,
+      }),
+    ],
+  });
+}
+
 // ==================== 主文档生成 ====================
 
 async function generateWordDocument(paper) {
   const fullText = paper.fullText || '';
   const allSections = parseAllSections(fullText);
 
-  function findContent(...keywords) {
+  function findSection(...keywords) {
     for (const kw of keywords) {
       for (const s of allSections) {
-        if (s.heading.includes(kw)) return s.lines.join('\n').trim();
+        if (s.heading.includes(kw)) return s;
       }
     }
-    return '';
+    return null;
   }
 
-  const abstractCN = paper.content?.abstract || findContent('摘要');
-  const keywordsCN = paper.content?.keywords?.length
-    ? paper.content.keywords.join('；')
-    : '';
-  const abstractEN = findContent('Abstract');
-  const keywordsEN = findContent('Keywords');
-  const introduction = paper.content?.introduction || findContent('绪论', '引言', 'Introduction');
-  const conclusion = paper.content?.conclusion || findContent('结论', '总结', 'Conclusion');
-  const acknowledgments = findContent('致谢', 'Acknowledgments');
-  const referencesRaw = findContent('参考文献', 'References');
+  // 特殊章节
+  const secAbstract = findSection('摘要');
+  const secAbstractEN = findSection('Abstract');
+  const secIntro = findSection('绪论', '引言', 'Introduction');
+  const secConclusion = findSection('结论', '总结', 'Conclusion');
+  const secAck = findSection('致谢', 'Acknowledgments');
+  const secRef = findSection('参考文献', 'References');
 
-  // 识别正文章节（排除摘要/绪论/结论/致谢/参考文献等）
+  // 关键词
+  const keywordsCN = paper.content?.keywords?.length ? paper.content.keywords.join('；') : '';
+  const keywordsEN = '';
+
   const metaSet = new Set(['摘要', 'Abstract', '关键词', 'Keywords', '绪论', '引言', 'Introduction',
     '结论', '总结', 'Conclusion', '致谢', 'Acknowledgments', '参考文献', 'References', '目录']);
 
-  const bodySections = allSections.filter(s => {
-    if (!s.heading) return false;
-    return ![...metaSet].some(kw => s.heading.includes(kw));
-  });
+  // 正文章节：排除特殊章节，按原顺序
+  const bodySections = allSections.filter(s => ![...metaSet].some(kw => s.heading.includes(kw)));
 
   // ---------- 封面 ----------
   const coverChildren = [];
@@ -339,8 +276,12 @@ async function generateWordDocument(paper) {
   const main = [];
 
   // 中文摘要
-  main.push(sectionHeading('摘  要'));
-  main.push(...contentToParagraphs(abstractCN));
+  main.push(createHeadingParagraph('摘  要', 1));
+  if (secAbstract) {
+    main.push(...contentToParagraphs(secAbstract.lines.join('\n')));
+  } else {
+    main.push(...contentToParagraphs(paper.content?.abstract || ''));
+  }
   main.push(emptyLine());
   if (keywordsCN) {
     main.push(new Paragraph({
@@ -353,9 +294,9 @@ async function generateWordDocument(paper) {
   }
 
   // 英文摘要
-  if (abstractEN) {
-    main.push(sectionHeading('Abstract'));
-    main.push(...contentToParagraphs(abstractEN));
+  if (secAbstractEN) {
+    main.push(createHeadingParagraph('Abstract', 1));
+    main.push(...contentToParagraphs(secAbstractEN.lines.join('\n')));
     main.push(emptyLine());
     if (keywordsEN) {
       main.push(new Paragraph({
@@ -369,86 +310,76 @@ async function generateWordDocument(paper) {
   }
 
   // 目录
-  main.push(sectionHeading('目  录'));
+  main.push(createHeadingParagraph('目  录', 1));
   main.push(new TableOfContents('目录', { headingLevelRange: '1-3', hyperlink: true }));
   main.push(new Paragraph({ children: [new PageBreak()] }));
 
   // 绪论
-  if (introduction) {
-    main.push(sectionHeading('绪  论'));
-    main.push(...contentToParagraphs(introduction));
+  if (secIntro) {
+    main.push(createHeadingParagraph('绪  论', 1));
+    main.push(...contentToParagraphs(secIntro.lines.join('\n')));
+    main.push(emptyLine());
+  } else if (paper.content?.introduction) {
+    main.push(createHeadingParagraph('绪  论', 1));
+    main.push(...contentToParagraphs(paper.content.introduction));
     main.push(emptyLine());
   }
 
-  // 正文章节
+  // 正文章节 — 每个 section 使用其 markdown 级别作为标题级别
   for (const sec of bodySections) {
-    const isMainChapter = /^第[一二三四五六七八九十\d]+章|^[一二三四五六七八九十]、|^\d+[\.\、]/.test(sec.heading);
-    main.push(sectionHeading(sec.heading));
-    // 判断内部是否有子标题
-    const subSections = parseAllSections(sec.lines.join('\n'));
-    if (subSections.length > 1) {
-      for (const sub of subSections) {
-        if (sub.level === 1) {
-          main.push(sectionHeading(sub.heading));
-        } else {
-          const size = sub.level === 2 ? SIZE_H2 : SIZE_H3;
-          const hLevel = sub.level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3;
-          main.push(new Paragraph({
-            alignment: AlignmentType.LEFT,
-            spacing: { before: 150, after: 80, line: LINE_HEIGHT_15, lineRule: LineRuleType.AUTO },
-            heading: hLevel,
-            children: [makeHeadingRun(sub.heading, size)],
-          }));
-        }
-        main.push(...contentToParagraphs(sub.lines.join('\n')));
-      }
-    } else {
-      main.push(...contentToParagraphs(sec.lines.join('\n')));
-    }
+    const hLevel = Math.min(sec.level + 1, 3); // # → H2, ## → H3, ### → H3 (adjust mapping)
+    // 映射：一级 markdown(#) → Word H1, 二级 markdown(##) → Word H2, 三级 markdown(###) → Word H3
+    const wordLevel = sec.level;
+    main.push(createHeadingParagraph(sec.heading, wordLevel));
+    main.push(...contentToParagraphs(sec.lines.join('\n')));
     main.push(emptyLine());
   }
 
   // 结论
-  if (conclusion) {
-    main.push(sectionHeading('结  论'));
-    main.push(...contentToParagraphs(conclusion));
+  if (secConclusion) {
+    main.push(createHeadingParagraph('结  论', 1));
+    main.push(...contentToParagraphs(secConclusion.lines.join('\n')));
+    main.push(emptyLine());
+  } else if (paper.content?.conclusion) {
+    main.push(createHeadingParagraph('结  论', 1));
+    main.push(...contentToParagraphs(paper.content.conclusion));
     main.push(emptyLine());
   }
 
   // 致谢
-  if (acknowledgments) {
-    main.push(sectionHeading('致  谢'));
-    main.push(...contentToParagraphs(acknowledgments));
+  if (secAck) {
+    main.push(createHeadingParagraph('致  谢', 1));
+    main.push(...contentToParagraphs(secAck.lines.join('\n')));
     main.push(emptyLine());
   }
 
   // 参考文献
-  if (referencesRaw) {
-    main.push(sectionHeading('参考文献'));
-    const refLines = referencesRaw.split('\n').filter(l => l.trim());
+  if (secRef) {
+    main.push(createHeadingParagraph('参考文献', 1));
+    const refLines = secRef.lines.join('\n').split('\n').filter(l => l.trim());
     for (const line of refLines) {
       const cleaned = line.trim().replace(/^[\-\*\d+\.\)、\[\]]+\s*/, '');
       if (cleaned) {
         main.push(new Paragraph({
           alignment: AlignmentType.JUSTIFIED,
           spacing: { line: LINE_HEIGHT_15 },
-          children: [makeRefRun(cleaned)],
+          children: [makeRun(cleaned, false, false, SIZE_REF)],
         }));
       }
     }
   } else if (paper.content?.references?.length) {
-    main.push(sectionHeading('参考文献'));
+    main.push(createHeadingParagraph('参考文献', 1));
     for (const ref of paper.content.references) {
       if (ref.text) {
         main.push(new Paragraph({
           spacing: { line: LINE_HEIGHT_15 },
-          children: [makeRefRun(ref.text)],
+          children: [makeRun(ref.text, false, false, SIZE_REF)],
         }));
       }
     }
   }
 
-  // ---------- 组装文档 ----------
+  // ---------- 组装 ----------
   const doc = new Document({
     styles: {
       default: {
