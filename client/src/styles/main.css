@@ -211,7 +211,8 @@
 
   /* Subtle glass effect for overlays */
   .glass {
-    @apply bg-[var(--color-surface)]/80 backdrop-blur-lg border border-[var(--color-border-light)];
+    @apply backdrop-blur-lg border border-[var(--color-border-light)];
+    background: color-mix(in srgb, var(--color-surface) 80%, transparent);
   }
 
   /* Staggered animation helper */
