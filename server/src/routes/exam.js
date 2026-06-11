@@ -4,6 +4,7 @@ const { authenticate } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 
 router.post('/generate', authenticate, upload.single('file'), ctrl.generateQuestions);
+router.post('/', authenticate, ctrl.create);
 router.get('/', authenticate, ctrl.getAll);
 router.get('/wrong-book', authenticate, ctrl.getWrongBook);
 router.get('/:id', authenticate, ctrl.getOne);

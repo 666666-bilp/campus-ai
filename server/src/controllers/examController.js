@@ -2,6 +2,23 @@ const { success, error, paginated } = require('../utils/response');
 const aiService = require('../services/aiService');
 const ExamQuestion = require('../models/ExamQuestion');
 
+const VALID_TYPES = ['single', 'multiple', 'judge', 'essay'];
+const TYPE_ALIASES = {
+  true_false: 'judge', 'true/false': 'judge', tf: 'judge', bool: 'judge', boolean: 'judge',
+  fill_blank: 'essay', 'fill-in-the-blank': 'essay', fill: 'essay', blank: 'essay',
+  short_answer: 'essay', short: 'essay',
+  choice: 'single', multi: 'multiple',
+};
+
+function normalizeQuestions(questions) {
+  return questions.map(q => {
+    const rawType = (q.type || '').toLowerCase().trim();
+    if (VALID_TYPES.includes(rawType)) return q;
+    const mapped = TYPE_ALIASES[rawType] || 'single';
+    return { ...q, type: mapped };
+  });
+}
+
 /**
  * Generate exam questions from text content via AI.
  * POST /api/exam/generate
@@ -20,37 +37,37 @@ const generateQuestions = async (req, res, next) => {
     }
     const questions = result.data || [];
 
-    // Normalize question types to match Mongoose enum
-    const VALID_TYPES = ['single', 'multiple', 'judge', 'essay'];
-    const TYPE_ALIASES = {
-      true_false: 'judge',
-      'true/false': 'judge',
-      tf: 'judge',
-      bool: 'judge',
-      boolean: 'judge',
-      fill_blank: 'essay',
-      'fill-in-the-blank': 'essay',
-      fill: 'essay',
-      blank: 'essay',
-      short_answer: 'essay',
-      short: 'essay',
-      choice: 'single',
-      multi: 'multiple',
-    };
-    const normalizedQuestions = questions.map(q => {
-      const rawType = (q.type || '').toLowerCase().trim();
-      if (VALID_TYPES.includes(rawType)) return q;
-      const mapped = TYPE_ALIASES[rawType] || 'single';
-      return { ...q, type: mapped };
+    const exam = await ExamQuestion.create({
+      userId: req.user._id,
+      subject,
+      questions: normalizeQuestions(questions),
     });
+
+    success(res, exam, '题目生成成功', 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Save exam questions directly (no AI generation).
+ * POST /api/exam
+ */
+const create = async (req, res, next) => {
+  try {
+    const { subject, questions } = req.body;
+
+    if (!subject || !questions || !Array.isArray(questions) || questions.length === 0) {
+      return error(res, '请提供科目和题目列表', 400);
+    }
 
     const exam = await ExamQuestion.create({
       userId: req.user._id,
       subject,
-      questions: normalizedQuestions,
+      questions: normalizeQuestions(questions),
     });
 
-    success(res, exam, '题目生成成功', 201);
+    success(res, exam, '题库保存成功', 201);
   } catch (err) {
     next(err);
   }
@@ -357,6 +374,7 @@ const submitAnswer = async (req, res, next) => {
 
 module.exports = {
   generateQuestions,
+  create,
   getAll,
   getOne,
   delete: remove,

@@ -71,6 +71,7 @@ export const noteAPI = {
 
 export const examAPI = {
   generate: (formData) => request.post('/exam/generate', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  create: (data) => request.post('/exam', data),
   getAll: (params) => request.get('/exam', { params }),
   getOne: (id) => request.get(`/exam/${id}`),
   delete: (id) => request.delete(`/exam/${id}`),
