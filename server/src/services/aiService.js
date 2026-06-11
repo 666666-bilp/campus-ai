@@ -321,7 +321,7 @@ ${truncated}
 Return a JSON array of question objects:
 [
   {
-    "type": "single|multiple|true_false|essay|fill_blank",
+    "type": "single|multiple|judge|essay",
     "stem": "The question text",
     "options": ["A. option1", "B. option2", ...],
     "answer": "The correct answer(s)",

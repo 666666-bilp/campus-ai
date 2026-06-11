@@ -19,10 +19,35 @@ const generateQuestions = async (req, res, next) => {
       return error(res, 'Failed to generate questions: ' + (result.error || 'Unknown error'), 500);
     }
     const questions = result.data || [];
+
+    // Normalize question types to match Mongoose enum
+    const VALID_TYPES = ['single', 'multiple', 'judge', 'essay'];
+    const TYPE_ALIASES = {
+      true_false: 'judge',
+      'true/false': 'judge',
+      tf: 'judge',
+      bool: 'judge',
+      boolean: 'judge',
+      fill_blank: 'essay',
+      'fill-in-the-blank': 'essay',
+      fill: 'essay',
+      blank: 'essay',
+      short_answer: 'essay',
+      short: 'essay',
+      choice: 'single',
+      multi: 'multiple',
+    };
+    const normalizedQuestions = questions.map(q => {
+      const rawType = (q.type || '').toLowerCase().trim();
+      if (VALID_TYPES.includes(rawType)) return q;
+      const mapped = TYPE_ALIASES[rawType] || 'single';
+      return { ...q, type: mapped };
+    });
+
     const exam = await ExamQuestion.create({
       userId: req.user._id,
       subject,
-      questions,
+      questions: normalizedQuestions,
     });
 
     success(res, exam, '题目生成成功', 201);
