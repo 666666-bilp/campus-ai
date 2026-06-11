@@ -65,7 +65,7 @@ exports.oralPracticeChat = async (req, res, next) => {
     });
 
     await conversation.save();
-    success(res, conversation, '回复成功');
+    success(res, { reply: aiResponse, conversation }, '回复成功');
   } catch (err) { next(err); }
 };
 

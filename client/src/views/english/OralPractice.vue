@@ -132,7 +132,8 @@ async function handleSend() {
     }
     const res = await englishAPI.oralChat({ conversationId: conversationId.value, message: text, scenario: scenario.value });
     const data = res.data || res;
-    messages.value.push({ role: 'ai', content: data.reply || data.message || data.content || '', timestamp: new Date().toISOString(), _id: 'a-' + Date.now() });
+    const reply = data.reply || data.messages?.[data.messages.length - 1]?.content || '';
+    messages.value.push({ role: 'ai', content: reply, timestamp: new Date().toISOString(), _id: 'a-' + Date.now() });
   } catch (_) {
     messages.value.push({ role: 'ai', content: '抱歉，出了点问题。请重试。', timestamp: new Date().toISOString(), _id: 'e-' + Date.now() });
   } finally {
