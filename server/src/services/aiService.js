@@ -568,15 +568,17 @@ Output ONLY valid JSON, no markdown fences.`;
  * @returns {Promise<{success: boolean, data?: string, error?: string}>}
  */
 async function generateLatex(description) {
-  const prompt = `You are a LaTeX expert. Generate LaTeX code based on this description:
+  const prompt = `You are a LaTeX expert. Generate a LaTeX math expression based on this description:
 
 ${description}
 
 Requirements:
-- Generate complete, compilable LaTeX code
-- Use appropriate packages (amsmath, amssymb, graphicx, etc.)
-- Include document class and proper preamble if needed
-- For formulas: use proper math mode and formatting
+- Output ONLY the raw LaTeX math expression, NOT a full document
+- Do NOT include \\documentclass, \\usepackage, \\begin{document}, \\end{document}, or preamble
+- For inline formulas: output just the math expression (e.g., E=mc^2)
+- For display formulas: use \\[ ... \\] or $$ ... $$ delimiters
+- Use appropriate commands from amsmath and amssymb
+- Keep it clean and directly renderable in a math preview
 - Output ONLY the LaTeX code, no markdown fences, no explanations`;
 
   return await callAI([{ role: 'user', content: prompt }], { temperature: 0.3, maxTokens: 4000 });

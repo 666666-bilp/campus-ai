@@ -296,26 +296,46 @@ function formatTime(ts) {
 }
 
 function encodeLatexForUrl(latex) {
+  // More thorough encoding for CodeCogs API compatibility
   return encodeURIComponent(latex)
     .replace(/\(/g, '%28')
     .replace(/\)/g, '%29')
     .replace(/!/g, '%21')
     .replace(/'/g, '%27')
     .replace(/~/g, '%7E')
+    .replace(/\*/g, '%2A')
+    .replace(/\\/g, '%5C')
 }
 
-function extractPreviewLatex(latex) {
-  // 如果包含 \documentclass，提取 \begin{document} 和 \end{document} 之间的内容
-  const docMatch = latex.match(/\\begin\{document\}([\s\S]*?)\\end\{document\}/)
-  if (docMatch) {
-    // 去掉 preamble 命令，只保留数学环境内容
-    return docMatch[1]
-      .replace(/\\maketitle/g, '')
-      .replace(/\\section\*?\{[^}]*\}/g, '')
-      .replace(/\\section\{[^}]*\}/g, '')
-      .trim()
-  }
-  return latex.trim()
+function stripLatexPreamble(latex) {
+  let code = latex
+
+  // Remove full document wrappers
+  code = code.replace(/\\documentclass(\[.*?\])?\{[^}]*\}/g, '')
+  code = code.replace(/\\usepackage(\[.*?\])?\{[^}]*\}/g, '')
+  code = code.replace(/\\begin\{document\}/g, '')
+  code = code.replace(/\\end\{document\}/g, '')
+  code = code.replace(/\\maketitle/g, '')
+  code = code.replace(/\\title\{[^}]*\}/g, '')
+  code = code.replace(/\\author\{[^}]*\}/g, '')
+  code = code.replace(/\\date\{[^}]*\}/g, '')
+  code = code.replace(/\\section\*?\{[^}]*\}/g, '')
+  code = code.replace(/\\subsection\*?\{[^}]*\}/g, '')
+  code = code.replace(/\\textbf\{([^}]*)\}/g, '$1')
+  code = code.replace(/\\textit\{([^}]*)\}/g, '$1')
+
+  // Extract content from equation/align environments (keep inner math)
+  code = code.replace(/\\begin\{equation\*?\}/g, '\\[')
+  code = code.replace(/\\end\{equation\*?\}/g, '\\]')
+  code = code.replace(/\\begin\{align\*?\}/g, '\\[')
+  code = code.replace(/\\end\{align\*?\}/g, '\\]')
+  code = code.replace(/\\begin\{gather\*?\}/g, '\\[')
+  code = code.replace(/\\end\{gather\*?\}/g, '\\]')
+
+  // Collapse multiple blank lines
+  code = code.replace(/\n{3,}/g, '\n\n')
+
+  return code.trim()
 }
 
 function handlePreview() {
@@ -324,7 +344,7 @@ function handlePreview() {
   previewLoading.value = true
   previewError.value = false
 
-  const cleanLatex = extractPreviewLatex(latexCode.value.trim())
+  const cleanLatex = stripLatexPreamble(latexCode.value.trim())
   const encoded = encodeLatexForUrl(cleanLatex)
 
   previewUrl.value = `https://latex.codecogs.com/svg.image?${encoded}&t=${Date.now()}`
@@ -336,6 +356,7 @@ function handlePreview() {
 
 function onPreviewError() {
   previewError.value = true
+  console.warn('LaTeX preview failed for:', previewAlt.value?.substring(0, 200))
 }
 
 async function handleGenerate() {
