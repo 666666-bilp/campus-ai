@@ -11,6 +11,11 @@ request.interceptors.request.use(config => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  // FormData requires multipart/form-data with boundary set by browser — axios
+  // can't set it correctly, so remove any Content-Type and let the browser handle it.
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  }
   return config
 }, error => Promise.reject(error))
 
