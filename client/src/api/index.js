@@ -11,10 +11,10 @@ export const authAPI = {
 }
 
 export const documentAPI = {
-  upload: (formData) => request.post('/documents/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  upload: (formData) => request.post('/documents/upload', formData),
   getAll: (params) => request.get('/documents', { params }),
   getOne: (id) => request.get(`/documents/${id}`),
-  extractText: (id, formData) => request.post(`/documents/${id}/extract`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  extractText: (id, formData) => request.post(`/documents/${id}/extract`, formData),
   summarize: (id) => request.post(`/documents/${id}/summarize`),
   generateReferences: (id) => request.post(`/documents/${id}/references`),
   search: (params) => request.get('/documents/search', { params }),
@@ -70,7 +70,7 @@ export const noteAPI = {
 }
 
 export const examAPI = {
-  generate: (formData) => request.post('/exam/generate', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  generate: (formData) => request.post('/exam/generate', formData),
   create: (data) => request.post('/exam', data),
   getAll: (params) => request.get('/exam', { params }),
   getOne: (id) => request.get(`/exam/${id}`),

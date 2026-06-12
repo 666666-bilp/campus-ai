@@ -186,8 +186,8 @@ async function fetchDocuments() {
     const params = { page: currentPage.value, pageSize }
     if (searchQuery.value) params.search = searchQuery.value
     const res = await documentAPI.getAll(params)
-    documents.value = res.data.documents || res.data.data || []
-    totalPages.value = res.data.totalPages || Math.ceil((res.data.total || 0) / pageSize) || 1
+    documents.value = res.data || []
+    totalPages.value = res.pagination?.totalPages || 1
   } catch (err) {
     console.error('Failed to fetch documents:', err)
     documents.value = []
@@ -221,7 +221,7 @@ async function uploadFile(file) {
     currentPage.value = 1
     await fetchDocuments()
   } catch (err) {
-    const msg = err?.response?.data?.message || err?.message || '上传失败，请重试'
+    const msg = err?.message || '上传失败，请重试'
     alert(msg)
   } finally {
     uploading.value = false
