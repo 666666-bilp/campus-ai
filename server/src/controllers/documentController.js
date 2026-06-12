@@ -32,13 +32,12 @@ async function upload(req, res, next) {
       return error(res, 'No file provided. Please attach a file.', 400);
     }
 
+    const file = req.file;
     const { title } = req.body;
 
-    if (!title || !title.trim()) {
-      return error(res, 'Document title is required.', 400);
-    }
+    // Use filename (without extension) as default title
+    const docTitle = (title && title.trim()) || file.originalname.replace(/\.[^/.]+$/, '');
 
-    const file = req.file;
     const fileType = file.mimetype === 'application/pdf'
       ? 'pdf'
       : file.mimetype === 'application/msword'
@@ -70,7 +69,7 @@ async function upload(req, res, next) {
 
     const document = await Document.create({
       userId: req.user._id,
-      title: title.trim(),
+      title: docTitle,
       fileName: file.originalname,
       fileUrl,
       fileType,

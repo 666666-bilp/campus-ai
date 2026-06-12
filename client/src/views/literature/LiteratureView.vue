@@ -216,11 +216,13 @@ async function uploadFile(file) {
   try {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('title', file.name.replace(/\.[^/.]+$/, ''))
     await documentAPI.upload(formData)
     currentPage.value = 1
     await fetchDocuments()
   } catch (err) {
-    console.error('Upload failed:', err)
+    const msg = err?.response?.data?.message || err?.message || '上传失败，请重试'
+    alert(msg)
   } finally {
     uploading.value = false
     uploadingFileName.value = ''
